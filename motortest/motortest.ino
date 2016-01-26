@@ -1,6 +1,6 @@
 #include <Servo.h>
 
-const int MOTOR_MAX = 150;			// for safety
+const int MOTOR_MAX = 2000;			// for safety
 const int FRONT_LEFT_PIN = 5;
 const int FRONT_RIGHT_PIN = 4;
 const int BACK_LEFT_PIN = 2;
@@ -40,10 +40,10 @@ int filter_bound(int value) {
 }
 
 void set_motors(int fl, int fr, int bl, int br) {
-	front_left.write(filter_bound(fl));
-	front_right.write(filter_bound(fr));
-	back_left.write(filter_bound(bl));
-	back_right.write(filter_bound(br));
+	front_left.writeMicroseconds(filter_bound(fl));
+	front_right.writeMicroseconds(filter_bound(fr));
+	back_left.writeMicroseconds(filter_bound(bl));
+	back_right.writeMicroseconds(filter_bound(br));
 }
 
 double pid_roll(double p, double i, double d, short roll, short desired) {

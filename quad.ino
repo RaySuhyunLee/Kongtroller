@@ -1,11 +1,14 @@
 #include <Servo.h>
 
-const int MOTOR_START = 63;		// motor starts to turn when given this value.
-const int MOTOR_MAX = 70;			// for safety
-const int FRONT_LEFT_PIN = 5;
-const int FRONT_RIGHT_PIN = 4;
-const int BACK_LEFT_PIN = 2;
-const int BACK_RIGHT_PIN = 3;
+#define DEBUG
+
+#define MOTOR_IDLE 750
+#define MOTOR_START	1180	// motor starts to turn when given this value.
+#define MOTOR_MAX 1700		// for safety
+#define FRONT_LEFT_PIN 5
+#define FRONT_RIGHT_PIN 4
+#define BACK_LEFT_PIN 2
+#define BACK_RIGHT_PIN 3
 
 int isread = 1;
 
@@ -42,10 +45,10 @@ int filter_bound(int value) {
 }
 
 void set_motors(int fl, int fr, int bl, int br) {
-	front_left.write(filter_bound(fl));
-	front_right.write(filter_bound(fr));
-	back_left.write(filter_bound(bl));
-	back_right.write(filter_bound(br));
+	front_left.writeMicroseconds(filter_bound(fl));
+	front_right.writeMicroseconds(filter_bound(fr));
+	back_left.writeMicroseconds(filter_bound(bl));
+	back_right.writeMicroseconds(filter_bound(br));
 }
 
 void readMotion(short* roll, short* pitch, short* yaw) {
@@ -55,7 +58,6 @@ void readMotion(short* roll, short* pitch, short* yaw) {
     while(1) {
       Serial3.readBytes(buffer, 2);
       if (buffer[0] == 0x55 && buffer[1] == 0x55) {
-        Serial.print("start. ");
         break;
       }
     }
@@ -99,7 +101,6 @@ void sendCommand() {
 }
 
 
-// the loop routine runs over and over again forever:
 void loop() {
 	short roll, yaw, pitch;
 	double diff_roll;
@@ -116,6 +117,7 @@ void loop() {
 	bl = throttle + diff_roll;
 	br = throttle - diff_roll;
 	set_motors(fl, fr, bl, br);
+#ifdef DEBUG
 	Serial.print(fl, DEC);
 	Serial.print(" ");
 	Serial.print(fr, DEC);
@@ -123,6 +125,7 @@ void loop() {
 	Serial.print(bl, DEC);
 	Serial.print(" ");
 	Serial.println(br, DEC);
+#endif
 
 	//sendCommand();
   delay(100);

@@ -3,7 +3,7 @@
 
 void initIMU();
 void readIMU();
-void getGyro(short*, short*, short*);
+void getGyro(double*, double*, double*);
 void getAcc(short*, short*, short*);
 
 #endif

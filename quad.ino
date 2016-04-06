@@ -6,6 +6,7 @@
 //#define DEBUG    // uncomment when you need debugging
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -37,23 +38,29 @@ void loop() {
       int fl, fr, bl, br;
 
       readIMU();
-      getGyro(&roll, &yaw, &pitch);
+      getGyro(&roll, &pitch, &yaw);
       diff_roll = rollCtrl.pid(roll - 0);
-      Serial.println(diff_roll);
+      diff_pitch = pitchCtrl.pid(pitch - 0);
+      Serial.print("diff_roll: ");
+      Serial.print(diff_roll);
+      Serial.print(" | diff_pitch: ");
+      Serial.println(diff_pitch);
 
-      fl = throttle - diff_roll;
-      fr = throttle + diff_roll;
-      bl = throttle - diff_roll;
-      br = throttle + diff_roll;
+      fl = throttle - diff_roll - diff_pitch;
+      fr = throttle + diff_roll - diff_pitch;
+      bl = throttle - diff_roll + diff_pitch;
+      br = throttle + diff_roll + diff_pitch;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG
+      Serial.print("motors: [");
       Serial.print(fl, DEC);
       Serial.print(" ");
       Serial.print(fr, DEC);
       Serial.print(" ");
       Serial.print(bl, DEC);
       Serial.print(" ");
-      Serial.println(br, DEC);
+      Serial.print(br, DEC);
+      Serial.println("]");
 #endif
     }
   }

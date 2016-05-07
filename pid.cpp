@@ -17,6 +17,9 @@ double PIDController::pid(double error) {
   i_out = prev_i_out + (error * PID_INTERVAL_IN_MILLIS * i_gain);
   d_out = (error - prev_error) * d_gain;
 
+  // cut i value for safety
+  i_out = i_out < I_MAX ? i_out : I_MAX;
+
   prev_error = error;
   prev_i_out = i_out;
   return p_out + i_out + d_out;

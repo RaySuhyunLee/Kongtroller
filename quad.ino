@@ -5,14 +5,14 @@
 #include "receiver.h"
 
 //#define DEBUG    // uncomment when you need debugging
-#define DEBUG_RECEIVER
+//#define DEBUG_RECEIVER
+#define DEBUG_PID
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 
 // the setup routine runs once when you press reset:
 void setup() {
-  initReceiver();
 	init_motors();
   delay(5000);
 	
@@ -20,6 +20,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("start serial");
   initIMU();
+  initReceiver();
 }
 
 unsigned long pref_time=0;
@@ -27,7 +28,7 @@ unsigned long pref_time=0;
 void loop() {
   unsigned long current_time = millis();
   static int throttle, aileron, elevator, rudder;
-
+  
   if (Serial.available()) {
     throttle = Serial.parseInt();
   }

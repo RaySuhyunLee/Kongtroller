@@ -5,8 +5,9 @@
 #include "receiver.h"
 
 //#define DEBUG    // uncomment when you need debugging
-#define DEBUG_RECEIVER
-//#define DEBUG_PID
+//#define DEBUG_RECEIVER
+#define DEBUG_PID
+//#define DEBUG_IMU
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
@@ -36,13 +37,16 @@ unsigned long pref_time=0;
 void loop() {
   unsigned long current_time = millis();
   static int throttle, aileron, elevator, rudder;
+  double roll, yaw, pitch;
   
-  /* if (Serial.available()) {
+  if (Serial.available()) {
     throttle = Serial.parseInt();
-  } */
+  }
   if ((current_time >= pref_time + PID_INTERVAL_IN_MILLIS)) {
     /* read values from RC receiver */
     readReceiver(&throttle, &aileron, &elevator, &rudder);
+    //aileron = 1500;
+    //elevator = 1500;
 #ifdef DEBUG_RECEIVER
     Serial.print(throttle);
     Serial.print(" | ");
@@ -53,20 +57,29 @@ void loop() {
     Serial.println(rudder);
 #endif
 
+    readIMU();
+    getGyro(&roll, &pitch, &yaw);
+#ifdef DEBUG_IMU
+    Serial.print("roll: ");
+    Serial.print(roll);
+    Serial.print(" | pitch: ");
+    Serial.print(pitch);
+    Serial.print(" | yaw: ");
+    Serial.println(yaw);
+#endif
+
     if (throttle < MOTOR_START) {
       init_motors();
     } else {
       pref_time = current_time;
 
-      double roll, yaw, pitch;
       double diff_roll, diff_yaw, diff_pitch;
       int fl, fr, bl, br;
 
-      readIMU();
-      getGyro(&roll, &pitch, &yaw);
-      diff_roll = rollCtrl.pid(roll - (aileron - 1500) / 10.0);
-      diff_pitch = pitchCtrl.pid(pitch - (-elevator + 1500) / 10.0);
-      diff_yaw = yawCtrl.pid(yaw - initialYaw - (-rudder + 1500) / 10.0);
+      diff_roll = rollCtrl.pid(roll - (aileron - 1500) / 20.0);
+      diff_pitch = pitchCtrl.pid(pitch - (-elevator + 1500) / 20.0);
+      //diff_yaw = yawCtrl.pid(yaw - initialYaw - (-rudder + 1500) / 20.0);
+      diff_yaw = 0;
 #ifdef DEBUG_PID
       Serial.print("diff_roll: ");
       Serial.print(diff_roll);

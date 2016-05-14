@@ -26,9 +26,9 @@ void init_motors() {
 
 void set_motors(int fl, int fr, int bl, int br) {
 	front_left.writeMicroseconds(filter_bound(fl+3));
-	front_right.writeMicroseconds(filter_bound(fr+12));
+	front_right.writeMicroseconds(filter_bound(fr+14));
 	back_left.writeMicroseconds(filter_bound(bl+6));
-	back_right.writeMicroseconds(filter_bound(br));
+	back_right.writeMicroseconds(filter_bound(br+10));
 }
 
 int filter_bound(int value) {

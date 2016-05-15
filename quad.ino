@@ -76,7 +76,8 @@ void loop() {
       double diff_roll, diff_yaw, diff_pitch;
       int fl, fr, bl, br;
 
-      diff_roll = rollCtrl.pid(roll - (aileron - 1500) / 20.0);
+      //diff_roll = rollCtrl.pid(roll - (aileron - 1500) / 20.0);
+      diff_roll = 0;
       diff_pitch = pitchCtrl.pid(pitch - (-elevator + 1500) / 20.0);
       //diff_yaw = yawCtrl.pid(yaw - initialYaw - (-rudder + 1500) / 20.0);
       diff_yaw = 0;

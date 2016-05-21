@@ -9,10 +9,10 @@
 #define BACK_LEFT_PIN 2
 #define BACK_RIGHT_PIN 3
 
-#define P_GAIN 0.7
-#define I_GAIN 0.05
-#define D_GAIN 7.0
-#define I_MAX 5
-#define PID_INTERVAL_IN_MILLIS 1
+#define P_GAIN 1.2
+#define I_GAIN 0.02
+#define D_GAIN 5.0//9.0
+#define I_MAX 10
+#define PID_INTERVAL_IN_MILLIS 2
 
 #endif

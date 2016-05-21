@@ -1,5 +1,6 @@
 #include "pid.h"
 #include "constants.h"
+#include <Arduino.h>
 
 PIDController::PIDController(double p_gain, double i_gain, double d_gain, long interval) {
   this->p_gain = p_gain;
@@ -18,7 +19,7 @@ double PIDController::pid(double error) {
   d_out = (error - prev_error) * d_gain;
 
   // cut i value for safety
-  i_out = i_out < I_MAX ? i_out : I_MAX;
+  i_out = constrain(i_out, -I_MAX, I_MAX);
 
   prev_error = error;
   prev_i_out = i_out;

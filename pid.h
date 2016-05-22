@@ -11,6 +11,7 @@ class PIDController {
     long interval_in_millis;
   public:
     PIDController(double, double, double, long);
+    double pid(double, double*, double*, double*);
     double pid(double);
 };
 

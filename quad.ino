@@ -6,7 +6,7 @@
 
 //#define DEBUG    // uncomment when you need debugging
 //#define DEBUG_RECEIVER
-#define DEBUG_PID
+//#define DEBUG_PID
 //#define DEBUG_IMU
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
@@ -14,6 +14,8 @@ PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController yawCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN, PID_INTERVAL_IN_MILLIS);
 
 double initialYaw;
+
+long testCnt=0;
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -45,8 +47,7 @@ void loop() {
   if ((current_time >= pref_time + PID_INTERVAL_IN_MILLIS)) {
     /* read values from RC receiver */
     readReceiver(&throttle, &aileron, &elevator, &rudder);
-    //aileron = 1500;
-    //elevator = 1500;
+
 #ifdef DEBUG_RECEIVER
     Serial.print(throttle);
     Serial.print(" | ");
@@ -57,7 +58,7 @@ void loop() {
     Serial.println(rudder);
 #endif
 
-    readIMU();
+    readIMU(); // FIXME this delays the loop seriously
     yaw_prev = yaw_current;
     getGyro(&roll, &pitch, &yaw_current);
 #ifdef DEBUG_IMU
@@ -76,6 +77,9 @@ void loop() {
 
       double diff_roll, diff_yaw, diff_pitch;
       int fl, fr, bl, br;
+
+      testCnt++;
+      Serial.println(testCnt);
 
 #ifdef DEBUG_PID
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;

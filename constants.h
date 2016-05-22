@@ -9,12 +9,11 @@
 #define BACK_LEFT_PIN 2
 #define BACK_RIGHT_PIN 3
 
-#define P_GAIN 2.5
+#define P_GAIN 3.0
 #define I_GAIN 0.025
-#define D_GAIN 25.0
+#define D_GAIN 40.0
 #define P_MAX 100
 #define I_MAX 50
-#define D_MAX 30
 
 #define YAW_P_GAIN 10.0
 #define YAW_I_GAIN 0.0

@@ -83,8 +83,8 @@ void loop() {
 
 #ifdef DEBUG_PID
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
-      diff_roll = rollCtrl.pid(roll + (aileron - 1500) / 20.0, &roll_p, &roll_i, &roll_d);
-      diff_pitch = pitchCtrl.pid(pitch + (elevator - 1500) / 20.0, &pitch_p, &pitch_i, &pitch_d);
+      diff_roll = rollCtrl.pid(roll + (aileron - 1500) * AILERON_GAIN, &roll_p, &roll_i, &roll_d);
+      diff_pitch = pitchCtrl.pid(pitch + (elevator - 1500) * ELEVATOR_GAIN, &pitch_p, &pitch_i, &pitch_d);
       Serial.print(roll_p);
       Serial.print(" ");
       Serial.print(roll_i);

@@ -39,7 +39,7 @@ unsigned long pref_time=0;
 void loop() {
   unsigned long current_time = millis();
   static int throttle, aileron, elevator, rudder;
-  double roll, pitch, yaw_prev, yaw_current;
+  static double roll, pitch, yaw_prev, yaw_current;
   
   if (Serial.available()) {
     throttle = Serial.parseInt();
@@ -58,9 +58,10 @@ void loop() {
     Serial.println(rudder);
 #endif
 
-    readIMU(); // FIXME this delays the loop seriously
+    readIMU();
     yaw_prev = yaw_current;
     getGyro(&roll, &pitch, &yaw_current);
+
 #ifdef DEBUG_IMU
     Serial.print("roll: ");
     Serial.print(roll);
@@ -79,26 +80,24 @@ void loop() {
       int fl, fr, bl, br;
 
       testCnt++;
-      Serial.println(testCnt);
+      //Serial.println(testCnt);
 
-#ifdef DEBUG_PID
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
       diff_roll = rollCtrl.pid(roll + (aileron - 1500) * AILERON_GAIN, &roll_p, &roll_i, &roll_d);
       diff_pitch = pitchCtrl.pid(pitch + (elevator - 1500) * ELEVATOR_GAIN, &pitch_p, &pitch_i, &pitch_d);
-      Serial.print(roll_p);
+      double yaw_omega; // TODO move logics below to other module
+      yaw_omega = yaw_current - yaw_prev;
+      if (yaw_omega < -180)  yaw_omega += 360;
+      else if (yaw_omega > 180) yaw_omega -= 360;
+      diff_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS);
+      diff_yaw += (rudder - 1500) * 0.3;
+
+#ifdef DEBUG_PID
+      Serial.print(diff_roll);
       Serial.print(" ");
-      Serial.print(roll_i);
+      Serial.print(diff_pitch);
       Serial.print(" ");
-      Serial.print(roll_d);
-      Serial.print(" ");
-      Serial.println(diff_roll);
-      //Serial.println(diff_yaw);
-#else
-      diff_roll = rollCtrl.pid(roll + (aileron - 1500) / 20.0);
-      diff_pitch = pitchCtrl.pid(pitch + (elevator - 1500) / 20.0);
-      //diff_yaw = yawCtrl.pid((yaw_current - yaw_prev) / PID_INTERVAL_IN_MILLIS) - (rudder - 1500) / 30.0;
-      //diff_yaw = - (rudder - 1500) / 5.0;
-      diff_yaw = 0;
+      Serial.println(diff_yaw);
 #endif
 
       fl = throttle - diff_roll - diff_pitch + diff_yaw;

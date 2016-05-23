@@ -10,17 +10,17 @@
 #define BACK_RIGHT_PIN 3
 
 #define P_GAIN 2.6
-#define I_GAIN 0.002
+#define I_GAIN 0.005
 #define D_GAIN 19.0
 #define P_MAX 100
-#define I_MAX 50
+#define I_MAX 15
 
-#define YAW_P_GAIN 10.0
+#define YAW_P_GAIN 1000.0
 #define YAW_I_GAIN 0.0
-#define YAW_D_GAIN 5.0
+#define YAW_D_GAIN 0.0
 
-#define AILERON_GAIN 0.02
-#define ELEVATOR_GAIN 0.02
+#define AILERON_GAIN 0.05
+#define ELEVATOR_GAIN 0.05
 
 #define PID_INTERVAL_IN_MILLIS 20.0
 

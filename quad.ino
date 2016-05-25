@@ -6,7 +6,7 @@
 
 //#define DEBUG    // uncomment when you need debugging
 //#define DEBUG_RECEIVER
-//#define DEBUG_PID
+#define DEBUG_PID
 //#define DEBUG_IMU
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
@@ -76,34 +76,36 @@ void loop() {
     } else {
       pref_time = current_time;
 
-      double diff_roll, diff_yaw, diff_pitch;
+      double out_roll, out_yaw, out_pitch;
       int fl, fr, bl, br;
 
       testCnt++;
       //Serial.println(testCnt);
 
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
-      diff_roll = rollCtrl.pid(roll + (aileron - 1500) * AILERON_GAIN, &roll_p, &roll_i, &roll_d);
-      diff_pitch = pitchCtrl.pid(pitch + (elevator - 1500) * ELEVATOR_GAIN, &pitch_p, &pitch_i, &pitch_d);
+      out_roll = rollCtrl.pid(roll - aileron, &roll_p, &roll_i, &roll_d);
+      out_pitch = pitchCtrl.pid(pitch - elevator, &pitch_p, &pitch_i, &pitch_d);
       double yaw_omega; // TODO move logics below to other module
       yaw_omega = yaw_current - yaw_prev;
       if (yaw_omega < -180)  yaw_omega += 360;
       else if (yaw_omega > 180) yaw_omega -= 360;
-      diff_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS);
-      diff_yaw += (rudder - 1500) * 0.3;
+      out_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS);
+      out_yaw += rudder;
 
 #ifdef DEBUG_PID
-      Serial.print(diff_roll);
+      Serial.print(out_roll);
       Serial.print(" ");
-      Serial.print(diff_pitch);
+      Serial.print(out_pitch);
       Serial.print(" ");
-      Serial.println(diff_yaw);
+      Serial.print(out_yaw);
+      Serial.print(" ");
+      Serial.println(throttle);
 #endif
 
-      fl = throttle - diff_roll - diff_pitch + diff_yaw;
-      fr = throttle + diff_roll - diff_pitch - diff_yaw;
-      bl = throttle - diff_roll + diff_pitch - diff_yaw;
-      br = throttle + diff_roll + diff_pitch + diff_yaw;
+      fl = throttle - out_roll - out_pitch + out_yaw;
+      fr = throttle + out_roll - out_pitch - out_yaw;
+      bl = throttle - out_roll + out_pitch - out_yaw;
+      br = throttle + out_roll + out_pitch + out_yaw;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG
       Serial.print("motors: [");

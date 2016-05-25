@@ -17,7 +17,7 @@ double PIDController::pid(double error, double *p_out, double *i_out, double *d_
   *d_out = (error - prev_error) * d_gain;
 
   // cut i value for safety
-  //p_out = constrain(p_out, -P_MAX, P_MAX);
+  *p_out = constrain(*p_out, -P_MAX, P_MAX);
   *i_out = constrain(*i_out, -I_MAX, I_MAX);
 
   prev_error = error;

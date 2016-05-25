@@ -5,6 +5,7 @@
 
 #include <Arduino.h>
 #include <EnableInterrupt.h>
+#include "Constants.h"
 
 #define CHANNEL_MAX 4
 int value[CHANNEL_MAX];
@@ -26,7 +27,10 @@ volatile long timeStamp[CHANNEL_MAX];
     timeStamp[channel] = micros(); \
   } else { \
     value[channel] = micros() - timeStamp[channel]; \
-  } 
+  }
+
+#define NEUTRALIZE(value) \
+  (1500 - (value))
 
 void readThrottle() { READ_SIGNAL(PIN_THROTTLE, INDEX_THROTTLE) }
 void readAileron() { READ_SIGNAL(PIN_AILERON, INDEX_AILERON) }
@@ -45,8 +49,8 @@ void initReceiver(void) {
 }
 
 void readReceiver(int *throttle, int *aileron, int *elevator, int *rudder) {
-  *throttle = value[INDEX_THROTTLE];
-  *aileron = value[INDEX_AILERON];
-  *elevator = value[INDEX_ELEVATOR];
-  *rudder = value[INDEX_RUDDER];
+  *throttle = value[INDEX_THROTTLE] * THROTTLE_GAIN;
+  *aileron = NEUTRALIZE(value[INDEX_AILERON]) * AILERON_GAIN;
+  *elevator = NEUTRALIZE(value[INDEX_ELEVATOR]) * ELEVATOR_GAIN;
+  *rudder = NEUTRALIZE(value[INDEX_RUDDER]) * RUDDER_GAIN;
 }

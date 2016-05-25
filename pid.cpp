@@ -11,10 +11,10 @@ PIDController::PIDController(double p_gain, double i_gain, double d_gain, long i
   interval_in_millis = interval;
 }
 
-double PIDController::pid(double error, double *p_out, double *i_out, double *d_out) {
+double PIDController::pid(double error, unsigned long elapsed_time, double *p_out, double *i_out, double *d_out) {
   *p_out = error * p_gain;
-  *i_out = prev_i_out + (error * PID_INTERVAL_IN_MILLIS * i_gain);
-  *d_out = (error - prev_error) * d_gain;
+  *i_out = prev_i_out + (error * elapsed_time * i_gain);
+  *d_out = (error - prev_error)  / elapsed_time * d_gain;
 
   // cut i value for safety
   *p_out = constrain(*p_out, -P_MAX, P_MAX);
@@ -25,9 +25,9 @@ double PIDController::pid(double error, double *p_out, double *i_out, double *d_
   return *p_out + *i_out + *d_out;
 }
 
-double PIDController::pid(double error) {
+double PIDController::pid(double error, unsigned long elapsed_time) {
   double p_out, i_out, d_out;
   
-  return pid(error, &p_out, &i_out, &d_out);
+  return pid(error, elapsed_time, &p_out, &i_out, &d_out);
 }
 

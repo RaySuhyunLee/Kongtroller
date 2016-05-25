@@ -8,11 +8,11 @@ class PIDController {
     double d_gain;
     double prev_error;
     double prev_i_out;
-    long interval_in_millis;
+    long interval_in_millis; /* FIXME DEPRECATED. Gonna be removed in the future. */
   public:
     PIDController(double, double, double, long);
-    double pid(double, double*, double*, double*);
-    double pid(double);
+    double pid(double, unsigned long, double*, double*, double*);
+    double pid(double, unsigned long);
 };
 
 #endif

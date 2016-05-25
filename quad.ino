@@ -4,9 +4,10 @@
 #include "pid.h"
 #include "receiver.h"
 
-//#define DEBUG    // uncomment when you need debugging
+/* uncomment below macros when you need debugging */
+//#define DEBUG_MOTORS
 //#define DEBUG_RECEIVER
-#define DEBUG_PID
+//#define DEBUG_PID
 //#define DEBUG_IMU
 
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
@@ -34,17 +35,19 @@ void setup() {
   getGyro(&tmp, &tmp, &initialYaw);
 }
 
-unsigned long pref_time=0;
+unsigned long prev_time=0;
 
 void loop() {
-  unsigned long current_time = millis();
+  unsigned long elapsed_time, current_time;
+  current_time = millis();
+  elapsed_time = current_time - prev_time;
   static int throttle, aileron, elevator, rudder;
   static double roll, pitch, yaw_prev, yaw_current;
   
   if (Serial.available()) {
     throttle = Serial.parseInt();
   }
-  if ((current_time >= pref_time + PID_INTERVAL_IN_MILLIS)) {
+  if ((elapsed_time >= PID_INTERVAL_IN_MILLIS)) {
     /* read values from RC receiver */
     readReceiver(&throttle, &aileron, &elevator, &rudder);
 
@@ -74,7 +77,7 @@ void loop() {
     if (throttle < MOTOR_START) {
       init_motors();
     } else {
-      pref_time = current_time;
+      prev_time = current_time;
 
       double out_roll, out_yaw, out_pitch;
       int fl, fr, bl, br;
@@ -83,13 +86,13 @@ void loop() {
       //Serial.println(testCnt);
 
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
-      out_roll = rollCtrl.pid(roll - aileron, &roll_p, &roll_i, &roll_d);
-      out_pitch = pitchCtrl.pid(pitch - elevator, &pitch_p, &pitch_i, &pitch_d);
+      out_roll = rollCtrl.pid(roll - aileron, elapsed_time, &roll_p, &roll_i, &roll_d);
+      out_pitch = pitchCtrl.pid(pitch - elevator, elapsed_time, &pitch_p, &pitch_i, &pitch_d);
       double yaw_omega; // TODO move logics below to other module
       yaw_omega = yaw_current - yaw_prev;
       if (yaw_omega < -180)  yaw_omega += 360;
       else if (yaw_omega > 180) yaw_omega -= 360;
-      out_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS);
+      out_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS, elapsed_time);
       out_yaw += rudder;
 
 #ifdef DEBUG_PID
@@ -98,8 +101,6 @@ void loop() {
       Serial.print(out_pitch);
       Serial.print(" ");
       Serial.print(out_yaw);
-      Serial.print(" ");
-      Serial.println(throttle);
 #endif
 
       fl = throttle - out_roll - out_pitch + out_yaw;
@@ -107,7 +108,7 @@ void loop() {
       bl = throttle - out_roll + out_pitch - out_yaw;
       br = throttle + out_roll + out_pitch + out_yaw;
       set_motors(fl, fr, bl, br);
-#ifdef DEBUG
+#ifdef DEBUG_MOTORS
       Serial.print("motors: [");
       Serial.print(fl, DEC);
       Serial.print(" ");

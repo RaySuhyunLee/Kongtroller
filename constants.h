@@ -11,7 +11,7 @@
 
 #define P_GAIN 2.6
 #define I_GAIN 0.004
-#define D_GAIN 21.0
+#define D_GAIN 1.0
 #define P_MAX 90
 #define I_MAX 7
 

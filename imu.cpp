@@ -27,8 +27,8 @@ void getGyro(double* roll, double* pitch, double* yaw) {
   *yaw = (imu_buffer[6] << 8 | imu_buffer[7]) / 100.0;
 }
 
-void getAcc(short* x, short* y, short* z) {
-  *x = imu_buffer[8] << 8 + imu_buffer[9];
-  *y = imu_buffer[10] << 8 + imu_buffer[11];
-  *z = imu_buffer[12] << 8 + imu_buffer[13];
+void getAcc(double* x, double* y, double* z) {
+  *x = (imu_buffer[8] << 8 + imu_buffer[9]) / 1000.0;
+  *y = (imu_buffer[10] << 8 + imu_buffer[11]) / 1000.0;
+  *z = (imu_buffer[12] << 8 + imu_buffer[13]) / 1000.0;
 }

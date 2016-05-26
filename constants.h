@@ -19,6 +19,10 @@
 #define YAW_I_GAIN 0.0
 #define YAW_D_GAIN 0.0
 
+#define ALTITUDE_P_GAIN 1.0
+#define ALTITUDE_I_GAIN 0.0
+#define ALTITUDE_D_GAIN 0.0
+
 #define THROTTLE_GAIN 1.0
 #define AILERON_GAIN 0.05
 #define ELEVATOR_GAIN 0.05

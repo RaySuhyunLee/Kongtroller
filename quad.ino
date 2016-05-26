@@ -13,10 +13,9 @@
 PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController yawCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController altitudeCtrl(ALTITUDE_P_GAIN, ALTITUDE_I_GAIN, ALTITUDE_D_GAIN, PID_INTERVAL_IN_MILLIS);
 
-double initialYaw;
-
-long testCnt=0;
+unsigned long testCnt=0;
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -32,7 +31,6 @@ void setup() {
   // initizlize yaw value
   readIMU();
   double tmp;
-  getGyro(&tmp, &tmp, &initialYaw);
 }
 
 unsigned long prev_time=0;
@@ -43,6 +41,7 @@ void loop() {
   elapsed_time = current_time - prev_time;
   static int throttle, aileron, elevator, rudder;
   static double roll, pitch, yaw_prev, yaw_current;
+  static double acc_x, acc_y, acc_z;
   
   if (Serial.available()) {
     throttle = Serial.parseInt();
@@ -64,6 +63,7 @@ void loop() {
     readIMU();
     yaw_prev = yaw_current;
     getGyro(&roll, &pitch, &yaw_current);
+    getAcc(&acc_x, &acc_y, &acc_z);
 
 #ifdef DEBUG_IMU
     Serial.print("roll: ");
@@ -79,7 +79,7 @@ void loop() {
     } else {
       prev_time = current_time;
 
-      double out_roll, out_yaw, out_pitch;
+      double out_roll, out_yaw, out_pitch, out_altitude;
       int fl, fr, bl, br;
 
       testCnt++;
@@ -88,12 +88,17 @@ void loop() {
       double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
       out_roll = rollCtrl.pid(roll - aileron, elapsed_time, &roll_p, &roll_i, &roll_d);
       out_pitch = pitchCtrl.pid(pitch - elevator, elapsed_time, &pitch_p, &pitch_i, &pitch_d);
+
       double yaw_omega; // TODO move logics below to other module
       yaw_omega = yaw_current - yaw_prev;
       if (yaw_omega < -180)  yaw_omega += 360;
       else if (yaw_omega > 180) yaw_omega -= 360;
       out_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS, elapsed_time);
       out_yaw += rudder;
+
+      double acc_climb;
+      // TODO implement acc_climb calculation logic
+      out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
 
 #ifdef DEBUG_PID
       Serial.print(out_roll);
@@ -103,10 +108,10 @@ void loop() {
       Serial.print(out_yaw);
 #endif
 
-      fl = throttle - out_roll - out_pitch + out_yaw;
-      fr = throttle + out_roll - out_pitch - out_yaw;
-      bl = throttle - out_roll + out_pitch - out_yaw;
-      br = throttle + out_roll + out_pitch + out_yaw;
+      fl = throttle - out_roll - out_pitch + out_yaw - out_altitude;
+      fr = throttle + out_roll - out_pitch - out_yaw - out_altitude;
+      bl = throttle - out_roll + out_pitch - out_yaw - out_altitude;
+      br = throttle + out_roll + out_pitch + out_yaw - out_altitude;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG_MOTORS
       Serial.print("motors: [");

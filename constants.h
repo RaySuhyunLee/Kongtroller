@@ -12,20 +12,19 @@
 #define P_GAIN 0.0 //2.6
 #define I_GAIN 0.0 //0.004
 #define D_GAIN 0.0 //1.0
-#define P_MAX 90
-#define I_MAX 7
 
-#define RATE_P_GAIN 0.7
-#define RATE_I_GAIN 2.0
-#define RATE_D_GAIN 0.0
+#define RATE_P_GAIN 0.5
+#define RATE_I_GAIN 3.0
+#define RATE_D_GAIN 0.01
 
-#define YAW_P_GAIN 0.5
+#define YAW_P_GAIN 0.7
 #define YAW_I_GAIN 0.0
 #define YAW_D_GAIN 0.0
 
-#define ALTITUDE_P_GAIN 1.0
+#define ALTITUDE_P_GAIN 0.05
 #define ALTITUDE_I_GAIN 0.0
 #define ALTITUDE_D_GAIN 0.0
+#define GRAVITIONAL_ACC 1000
 
 #define THROTTLE_GAIN 1.0
 #define AILERON_GAIN 0.2

@@ -116,12 +116,11 @@ void loop() {
 
       out_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron;
       out_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator;
-      out_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) + rudder;
+      out_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder;
 
-      double acc_climb;
+      double acc_climb = acc_z - GRAVITIONAL_ACC;
       // TODO implement acc_climb calculation logic
-      //out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
-      out_altitude = 0;
+      out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
 
 #ifdef DEBUG_PID
       Serial.print(out_roll);

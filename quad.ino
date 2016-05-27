@@ -10,12 +10,31 @@
 //#define DEBUG_PID
 //#define DEBUG_IMU
 
-PIDController rollCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
-PIDController pitchCtrl(P_GAIN, I_GAIN, D_GAIN, PID_INTERVAL_IN_MILLIS);
-PIDController yawCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController rollRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController pitchRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController yawRateCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN, PID_INTERVAL_IN_MILLIS);
 PIDController altitudeCtrl(ALTITUDE_P_GAIN, ALTITUDE_I_GAIN, ALTITUDE_D_GAIN, PID_INTERVAL_IN_MILLIS);
 
 unsigned long testCnt=0;
+
+#define GET_RATE(value_diff, interval, rate) \
+  if ((value_diff) < -180)  (rate) = (value_diff) + 360; \
+  else if ((value_diff) > 180) (rate) = (value_diff) - 360; \
+  (rate) = (rate) / interval;
+
+double getRate(double value_diff, long interval) {
+  double rate;
+  if (value_diff < -180) {
+    rate = value_diff + 360;
+  }
+  else if (value_diff > 180) {
+    rate = value_diff - 360;
+  } else {
+    rate = value_diff;
+  }
+  rate = rate * 1000 / interval;
+  return rate;
+}
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -40,7 +59,7 @@ void loop() {
   current_time = millis();
   elapsed_time = current_time - prev_time;
   static int throttle, aileron, elevator, rudder;
-  static double roll, pitch, yaw_prev, yaw_current;
+  static double roll_current, roll_prev, pitch_current, pitch_prev, yaw_prev, yaw_current;
   static double acc_x, acc_y, acc_z;
   
   if (Serial.available()) {
@@ -61,15 +80,17 @@ void loop() {
 #endif
 
     readIMU();
+    roll_prev = roll_current;
+    pitch_prev = pitch_current;
     yaw_prev = yaw_current;
-    getGyro(&roll, &pitch, &yaw_current);
+    getGyro(&roll_current, &pitch_current, &yaw_current);
     getAcc(&acc_x, &acc_y, &acc_z);
 
 #ifdef DEBUG_IMU
     Serial.print("roll: ");
-    Serial.print(roll);
+    Serial.print(roll_current);
     Serial.print(" | pitch: ");
-    Serial.print(pitch);
+    Serial.print(pitch_current);
     Serial.print(" | yaw: ");
     Serial.println(yaw_current);
 #endif
@@ -85,27 +106,29 @@ void loop() {
       testCnt++;
       //Serial.println(testCnt);
 
-      double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
-      out_roll = rollCtrl.pid(roll - aileron, elapsed_time, &roll_p, &roll_i, &roll_d);
-      out_pitch = pitchCtrl.pid(pitch - elevator, elapsed_time, &pitch_p, &pitch_i, &pitch_d);
+      /* Rate Control Logic */
 
-      double yaw_omega; // TODO move logics below to other module
-      yaw_omega = yaw_current - yaw_prev;
-      if (yaw_omega < -180)  yaw_omega += 360;
-      else if (yaw_omega > 180) yaw_omega -= 360;
-      out_yaw = yawCtrl.pid(yaw_omega / PID_INTERVAL_IN_MILLIS, elapsed_time);
-      out_yaw += rudder;
+      double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
+      double roll_omega, pitch_omega, yaw_omega;
+      pitch_omega = getRate(pitch_current-pitch_prev, elapsed_time);
+      roll_omega = getRate(roll_current-roll_prev, elapsed_time);
+      yaw_omega = getRate(yaw_current-yaw_prev, elapsed_time);
+
+      out_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron;
+      out_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator;
+      out_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) + rudder;
 
       double acc_climb;
       // TODO implement acc_climb calculation logic
-      out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
+      //out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
+      out_altitude = 0;
 
 #ifdef DEBUG_PID
       Serial.print(out_roll);
       Serial.print(" ");
       Serial.print(out_pitch);
       Serial.print(" ");
-      Serial.print(out_yaw);
+      Serial.println(out_yaw);
 #endif
 
       fl = throttle - out_roll - out_pitch + out_yaw - out_altitude;

@@ -19,11 +19,6 @@ PIDController altitudeCtrl(ALTITUDE_P_GAIN, ALTITUDE_I_GAIN, ALTITUDE_D_GAIN);
 
 unsigned long testCnt=0;
 
-#define GET_RATE(value_diff, interval, rate) \
-  if ((value_diff) < -180)  (rate) = (value_diff) + 360; \
-  else if ((value_diff) > 180) (rate) = (value_diff) - 360; \
-  (rate) = (rate) / interval;
-
 double getRate(double value_diff, long interval) {
   double rate;
   if (value_diff < -180) {

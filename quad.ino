@@ -10,10 +10,12 @@
 //#define DEBUG_PID
 //#define DEBUG_IMU
 
-PIDController rollRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN, PID_INTERVAL_IN_MILLIS);
-PIDController pitchRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN, PID_INTERVAL_IN_MILLIS);
-PIDController yawRateCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN, PID_INTERVAL_IN_MILLIS);
-PIDController altitudeCtrl(ALTITUDE_P_GAIN, ALTITUDE_I_GAIN, ALTITUDE_D_GAIN, PID_INTERVAL_IN_MILLIS);
+PIDController rollLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
+PIDController pitchLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
+PIDController rollRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN);
+PIDController pitchRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN);
+PIDController yawRateCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN);
+PIDController altitudeCtrl(ALTITUDE_P_GAIN, ALTITUDE_I_GAIN, ALTITUDE_D_GAIN);
 
 unsigned long testCnt=0;
 
@@ -49,7 +51,9 @@ void setup() {
   
   // initizlize yaw value
   readIMU();
-  double tmp;
+
+  rollLevelCtrl.setIMax(LEVEL_I_MAX);
+  pitchLevelCtrl.setIMax(LEVEL_I_MAX);
 }
 
 unsigned long prev_time=0;
@@ -99,12 +103,18 @@ void loop() {
       init_motors();
     } else {
       prev_time = current_time;
-
-      double out_roll, out_yaw, out_pitch, out_altitude;
+      
+      double out_level_roll, out_level_pitch;
+      double out_rate_roll, out_rate_yaw, out_rate_pitch, out_altitude;
       int fl, fr, bl, br;
 
       testCnt++;
       //Serial.println(testCnt);
+
+      /* Level Control Logic */
+
+      out_level_roll = rollLevelCtrl.pid(roll_current, elapsed_time);
+      out_level_pitch = pitchLevelCtrl.pid(pitch_current, elapsed_time);
 
       /* Rate Control Logic */
 
@@ -114,9 +124,11 @@ void loop() {
       roll_omega = getRate(roll_current-roll_prev, elapsed_time);
       yaw_omega = getRate(yaw_current-yaw_prev, elapsed_time);
 
-      out_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron;
-      out_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator;
-      out_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder;
+      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron;
+      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator;
+      out_rate_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder;
+
+      /* Altitude Control Logic */
 
       double acc_climb = acc_z - GRAVITIONAL_ACC;
       // TODO implement acc_climb calculation logic
@@ -130,10 +142,10 @@ void loop() {
       Serial.println(out_yaw);
 #endif
 
-      fl = throttle - out_roll - out_pitch + out_yaw - out_altitude;
-      fr = throttle + out_roll - out_pitch - out_yaw - out_altitude;
-      bl = throttle - out_roll + out_pitch - out_yaw - out_altitude;
-      br = throttle + out_roll + out_pitch + out_yaw - out_altitude;
+      fl = throttle - out_level_roll - out_level_pitch - out_rate_roll - out_rate_pitch + out_rate_yaw - out_altitude;
+      fr = throttle + out_level_roll - out_level_pitch + out_rate_roll - out_rate_pitch - out_rate_yaw - out_altitude;
+      bl = throttle - out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw - out_altitude;
+      br = throttle + out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw - out_altitude;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG_MOTORS
       Serial.print("motors: [");

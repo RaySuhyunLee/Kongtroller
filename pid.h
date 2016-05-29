@@ -8,9 +8,10 @@ class PIDController {
     double d_gain;
     double prev_error;
     double prev_i_out;
-    long interval_in_millis; /* FIXME DEPRECATED. Gonna be removed in the future. */
+    double i_max;
   public:
-    PIDController(double, double, double, long);
+    PIDController(double, double, double);
+    void setIMax(double);
     double pid(double, unsigned long, double*, double*, double*);
     double pid(double, unsigned long);
 };

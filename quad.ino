@@ -3,12 +3,13 @@
 #include "imu.h"
 #include "pid.h"
 #include "receiver.h"
+#include "starter.h"
 
 /* uncomment below macros when you need debugging */
 //#define DEBUG_MOTORS
 //#define DEBUG_RECEIVER
 //#define DEBUG_PID
-//#define DEBUG_IMU
+#define DEBUG_IMU
 
 PIDController rollLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
 PIDController pitchLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
@@ -35,6 +36,7 @@ double getRate(double value_diff, long interval) {
 
 // the setup routine runs once when you press reset:
 void setup() {
+  initStarter(2000, DISARM_TIME_IN_MILLIS);
 	init_motors();
   delay(3000);
 	
@@ -43,9 +45,6 @@ void setup() {
   Serial.println("start serial");
   initIMU();
   initReceiver();
-  
-  // initizlize yaw value
-  readIMU();
 
   rollLevelCtrl.setIMax(LEVEL_I_MAX);
   pitchLevelCtrl.setIMax(LEVEL_I_MAX);
@@ -93,19 +92,31 @@ void loop() {
     Serial.print(" | yaw: ");
     Serial.println(yaw_current);
 #endif
+   
+    if (!isArmed()) {
+      if (rudder > 400) {
+        startArmCount(); 
+      } else {
+        cancelArmCount();
+      }
+    }
 
     if (throttle < MOTOR_START) {
       init_motors();
-    } else {
+      startDisarmCount();
+    } else if (isArmed()){
+      cancelDisarmCount();
+
       prev_time = current_time;
-      
-      double out_level_roll, out_level_pitch;
-      double out_rate_roll, out_rate_yaw, out_rate_pitch, out_altitude;
-      int fl, fr, bl, br;
 
       testCnt++;
       //Serial.println(testCnt);
+      
+      static double roll_prev, pitch_prev, yaw_prev;
 
+      double out_level_roll, out_level_pitch;
+      double out_rate_roll, out_rate_yaw, out_rate_pitch, out_altitude;
+      int fl, fr, bl, br;
       /* Level Control Logic */
 
       out_level_roll = rollLevelCtrl.pid(roll_current, elapsed_time);
@@ -119,9 +130,9 @@ void loop() {
       roll_omega = getRate(roll_current-roll_prev, elapsed_time);
       yaw_omega = getRate(yaw_current-yaw_prev, elapsed_time);
 
-      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron;
-      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator;
-      out_rate_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder;
+      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron * AILERON_GAIN;
+      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator * ELEVATOR_GAIN;
+      out_rate_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder * RUDDER_GAIN;
 
       /* Altitude Control Logic */
 
@@ -153,6 +164,10 @@ void loop() {
       Serial.print(br, DEC);
       Serial.println("]");
 #endif
+
+      roll_prev = roll_current;
+      pitch_prev = pitch_current;
+      yaw_prev = yaw_current;
     }
   }
 }

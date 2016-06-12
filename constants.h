@@ -1,6 +1,11 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
+#define DISARM_TIME_IN_MILLIS 7000
+
+#define GREEN_LIGHT_PIN 12
+#define RED_LIGHT_PIN 13
+
 #define MOTOR_IDLE 1000 // 750
 #define MOTOR_START	1179	// motor starts to turn when given this value.
 #define MOTOR_MAX 2000		// for safety

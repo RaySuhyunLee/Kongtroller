@@ -15,10 +15,10 @@ int value[CHANNEL_MAX];
 #define INDEX_ELEVATOR 2
 #define INDEX_RUDDER 3
 
-#define PIN_THROTTLE 10
-#define PIN_AILERON 11
-#define PIN_ELEVATOR 12
-#define PIN_RUDDER 13
+#define PIN_THROTTLE A8
+#define PIN_AILERON A9
+#define PIN_ELEVATOR A10
+#define PIN_RUDDER A11
 
 volatile long timeStamp[CHANNEL_MAX];
 
@@ -50,7 +50,7 @@ void initReceiver(void) {
 
 void readReceiver(int *throttle, int *aileron, int *elevator, int *rudder) {
   *throttle = value[INDEX_THROTTLE] * THROTTLE_GAIN;
-  *aileron = NEUTRALIZE(value[INDEX_AILERON]) * AILERON_GAIN;
-  *elevator = NEUTRALIZE(value[INDEX_ELEVATOR]) * ELEVATOR_GAIN;
-  *rudder = NEUTRALIZE(value[INDEX_RUDDER]) * RUDDER_GAIN;
+  *aileron = NEUTRALIZE(value[INDEX_AILERON]);
+  *elevator = NEUTRALIZE(value[INDEX_ELEVATOR]);
+  *rudder = NEUTRALIZE(value[INDEX_RUDDER]);
 }

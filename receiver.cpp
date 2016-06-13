@@ -32,6 +32,21 @@ volatile long timeStamp[CHANNEL_MAX];
 #define NEUTRALIZE(value) \
   (1500 - (value))
 
+double expo(int value, float exponent) {
+  double powed = pow(value, exponent);
+  if (value < 0) {
+    powed = powed * -1;
+  }
+  return powed;
+}
+
+int cut(int value, int start, int end) {
+  if (value >= start && value <= end) {
+    value = 0;
+  }
+  return value;
+}
+
 void readThrottle() { READ_SIGNAL(PIN_THROTTLE, INDEX_THROTTLE) }
 void readAileron() { READ_SIGNAL(PIN_AILERON, INDEX_AILERON) }
 void readElevator() { READ_SIGNAL(PIN_ELEVATOR, INDEX_ELEVATOR) }
@@ -49,8 +64,8 @@ void initReceiver(void) {
 }
 
 void readReceiver(int *throttle, int *aileron, int *elevator, int *rudder) {
-  *throttle = value[INDEX_THROTTLE] * THROTTLE_GAIN;
-  *aileron = NEUTRALIZE(value[INDEX_AILERON]);
-  *elevator = NEUTRALIZE(value[INDEX_ELEVATOR]);
-  *rudder = NEUTRALIZE(value[INDEX_RUDDER]);
+  *throttle = value[INDEX_THROTTLE];
+  *aileron = expo(NEUTRALIZE(value[INDEX_AILERON]), 2) / 420;
+  *elevator = expo(NEUTRALIZE(value[INDEX_ELEVATOR]), 2) / 420;
+  *rudder = cut(NEUTRALIZE(value[INDEX_RUDDER]), -20, 20);
 }

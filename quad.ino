@@ -9,7 +9,7 @@
 //#define DEBUG_MOTORS
 //#define DEBUG_RECEIVER
 //#define DEBUG_PID
-#define DEBUG_IMU
+//#define DEBUG_IMU
 
 PIDController rollLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
 PIDController pitchLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
@@ -155,10 +155,15 @@ void loop() {
       Serial.println(out_yaw);
 #endif
 
-      fl = throttle - out_level_roll - out_level_pitch - out_rate_roll * 0.63 - out_rate_pitch + out_rate_yaw * 0.63 - out_altitude;
-      fr = throttle + out_level_roll - out_level_pitch + out_rate_roll * 0.63 - out_rate_pitch - out_rate_yaw * 0.63 - out_altitude;
-      bl = throttle - out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw - out_altitude;
-      br = throttle + out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw - out_altitude;
+      fl = throttle - out_altitude;
+      fr = throttle - out_altitude;
+      bl = throttle - out_altitude;
+      br = throttle - out_altitude;
+
+      fl += out_level_roll - out_level_pitch - out_rate_roll * 0.75 - out_rate_pitch + out_rate_yaw * 0.75;
+      fr += out_level_roll - out_level_pitch + out_rate_roll * 0.75 - out_rate_pitch - out_rate_yaw * 0.75;
+      bl += out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw;
+      br += out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG_MOTORS
       Serial.print("motors: [");

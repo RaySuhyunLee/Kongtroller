@@ -118,9 +118,13 @@ void loop() {
       double out_rate_roll, out_rate_yaw, out_rate_pitch, out_altitude;
       int fl, fr, bl, br;
       /* Level Control Logic */
-
+#ifdef LEVEL_CONTROL
       out_level_roll = rollLevelCtrl.pid(roll_current, elapsed_time);
       out_level_pitch = pitchLevelCtrl.pid(pitch_current, elapsed_time);
+#else
+      out_level_roll = 0;
+      out_level_pitch = 0;
+#endif
 
       /* Rate Control Logic */
 
@@ -132,6 +136,9 @@ void loop() {
 
       out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron * AILERON_GAIN;
       out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator * ELEVATOR_GAIN;
+
+      /* Yaw Control Logic */
+
       out_rate_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder * RUDDER_GAIN;
 
       /* Altitude Control Logic */
@@ -148,8 +155,8 @@ void loop() {
       Serial.println(out_yaw);
 #endif
 
-      fl = throttle - out_level_roll - out_level_pitch - out_rate_roll - out_rate_pitch + out_rate_yaw - out_altitude;
-      fr = throttle + out_level_roll - out_level_pitch + out_rate_roll - out_rate_pitch - out_rate_yaw - out_altitude;
+      fl = throttle - out_level_roll - out_level_pitch - out_rate_roll * 0.63 - out_rate_pitch + out_rate_yaw * 0.63 - out_altitude;
+      fr = throttle + out_level_roll - out_level_pitch + out_rate_roll * 0.63 - out_rate_pitch - out_rate_yaw * 0.63 - out_altitude;
       bl = throttle - out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw - out_altitude;
       br = throttle + out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw - out_altitude;
       set_motors(fl, fr, bl, br);

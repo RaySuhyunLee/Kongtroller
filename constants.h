@@ -14,13 +14,15 @@
 #define BACK_LEFT_PIN 2
 #define BACK_RIGHT_PIN 3
 
+//#define LEVEL_CONTROL
 #define LEVEL_P_GAIN 1.6
 #define LEVEL_I_GAIN 0.0
 #define LEVEL_I_MAX 20
 
-#define RATE_P_GAIN 0.55
-#define RATE_I_GAIN 3.0
-#define RATE_D_GAIN 0.02
+#define RATE_CONTROL
+#define RATE_P_GAIN 0.8
+#define RATE_I_GAIN 1.3 //2.37
+#define RATE_D_GAIN 0.0 //0.016
 
 #define YAW_P_GAIN 0.8
 #define YAW_I_GAIN 0.0
@@ -32,9 +34,9 @@
 #define GRAVITIONAL_ACC 1000
 
 #define THROTTLE_GAIN 1.0
-#define AILERON_GAIN 0.2
-#define ELEVATOR_GAIN 0.2
-#define RUDDER_GAIN 0.5
+#define AILERON_GAIN 0.14
+#define ELEVATOR_GAIN 0.14
+#define RUDDER_GAIN 1.0
 
 #define PID_INTERVAL_IN_MILLIS 20.0
 

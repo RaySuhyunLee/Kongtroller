@@ -5,9 +5,13 @@ PIDController::PIDController(double p_gain, double i_gain, double d_gain) {
   this->p_gain = p_gain;
   this->i_gain = i_gain;
   this->d_gain = d_gain;
+  this->i_max = -1;
+  this->initMemory();
+}
+
+void PIDController::initMemory() {
   this->prev_error = 0;
   this->prev_i_out = 0;
-  this->i_max = -1;
 }
 
 void PIDController::setIMax(double i_max) {
@@ -22,7 +26,7 @@ double PIDController::pid(double error, unsigned long elapsed_time, double *p_ou
 
   // cut i value for safety
   if (i_max >= 0) {
-    i = constrain(*i_out, -i_max, i_max);
+    i = constrain(i, -(this->i_max), this->i_max);
   }
 
   prev_error = error;

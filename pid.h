@@ -11,6 +11,7 @@ class PIDController {
     double i_max;
   public:
     PIDController(double, double, double);
+    void initMemory(void);
     void setIMax(double);
     double pid(double, unsigned long, double*, double*, double*);
     double pid(double, unsigned long);

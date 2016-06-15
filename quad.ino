@@ -11,8 +11,8 @@
 //#define DEBUG_PID
 //#define DEBUG_IMU
 
-PIDController rollLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
-PIDController pitchLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, 0);
+PIDController rollLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, LEVEL_D_GAIN);
+PIDController pitchLevelCtrl(LEVEL_P_GAIN, LEVEL_I_GAIN, LEVEL_D_GAIN);
 PIDController rollRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN);
 PIDController pitchRateCtrl(RATE_P_GAIN, RATE_I_GAIN, RATE_D_GAIN);
 PIDController yawRateCtrl(YAW_P_GAIN, YAW_I_GAIN, YAW_D_GAIN);
@@ -33,6 +33,8 @@ double getRate(double value_diff, long interval) {
   rate = rate * 1000 / interval;
   return rate;
 }
+
+void initPID();
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -103,6 +105,7 @@ void loop() {
 
     if (throttle < MOTOR_START) {
       init_motors();
+      initPID();
       startDisarmCount();
     } else if (isArmed()){
       cancelDisarmCount();
@@ -119,26 +122,32 @@ void loop() {
       int fl, fr, bl, br;
       /* Level Control Logic */
 #ifdef LEVEL_CONTROL
-      out_level_roll = rollLevelCtrl.pid(roll_current, elapsed_time);
-      out_level_pitch = pitchLevelCtrl.pid(pitch_current, elapsed_time);
+      out_level_roll = rollLevelCtrl.pid(roll_current - aileron * LEVEL_AILERON_GAIN, elapsed_time);
+      out_level_pitch = pitchLevelCtrl.pid(pitch_current - elevator * LEVEL_ELEVATOR_GAIN, elapsed_time);
 #else
       out_level_roll = 0;
       out_level_pitch = 0;
 #endif
 
       /* Rate Control Logic */
-
-      double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d, yaw_p, yaw_i, yaw_d;
-      double roll_omega, pitch_omega, yaw_omega;
+#ifdef RATE_CONTROL
+      double roll_p, roll_i, roll_d, pitch_p, pitch_i, pitch_d;
+      double roll_omega, pitch_omega;
       pitch_omega = getRate(pitch_current-pitch_prev, elapsed_time);
       roll_omega = getRate(roll_current-roll_prev, elapsed_time);
-      yaw_omega = getRate(yaw_current-yaw_prev, elapsed_time);
 
-      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron * AILERON_GAIN;
-      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator * ELEVATOR_GAIN;
+      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron * RATE_AILERON_GAIN;
+      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator * RATE_ELEVATOR_GAIN;
+#else
+      out_rate_roll = 0;
+      out_rate_pitch = 0;
+#endif
 
       /* Yaw Control Logic */
 
+      double yaw_p, yaw_i, yaw_d;
+      double yaw_omega;
+      yaw_omega = getRate(yaw_current-yaw_prev, elapsed_time);
       out_rate_yaw = yawRateCtrl.pid(yaw_omega, elapsed_time) - rudder * RUDDER_GAIN;
 
       /* Altitude Control Logic */
@@ -148,11 +157,11 @@ void loop() {
       out_altitude = altitudeCtrl.pid(acc_climb, elapsed_time);
 
 #ifdef DEBUG_PID
-      Serial.print(out_roll);
+      Serial.print(out_level_roll);
       Serial.print(" ");
-      Serial.print(out_pitch);
+      Serial.print(out_level_pitch);
       Serial.print(" ");
-      Serial.println(out_yaw);
+      Serial.println(out_rate_yaw);
 #endif
 
       fl = throttle - out_altitude;
@@ -160,9 +169,9 @@ void loop() {
       bl = throttle - out_altitude;
       br = throttle - out_altitude;
 
-      fl += out_level_roll - out_level_pitch - out_rate_roll * 0.75 - out_rate_pitch + out_rate_yaw * 0.75;
-      fr += out_level_roll - out_level_pitch + out_rate_roll * 0.75 - out_rate_pitch - out_rate_yaw * 0.75;
-      bl += out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw;
+      fl += - out_level_roll * 0.75 - out_level_pitch - out_rate_roll * 0.75 - out_rate_pitch + out_rate_yaw * 0.75;
+      fr += out_level_roll * 0.75 - out_level_pitch + out_rate_roll * 0.75 - out_rate_pitch - out_rate_yaw * 0.75;
+      bl += - out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw;
       br += out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG_MOTORS
@@ -182,4 +191,13 @@ void loop() {
       yaw_prev = yaw_current;
     }
   }
+}
+
+void initPID() {
+  rollLevelCtrl.initMemory();
+  pitchLevelCtrl.initMemory();
+  rollRateCtrl.initMemory();
+  pitchRateCtrl.initMemory();
+  yawRateCtrl.initMemory();
+  altitudeCtrl.initMemory();
 }

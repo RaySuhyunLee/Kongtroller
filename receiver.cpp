@@ -33,7 +33,8 @@ volatile long timeStamp[CHANNEL_MAX];
   (1500 - (value))
 
 double expo(int value, float exponent) {
-  double powed = pow(value, exponent);
+  int abs = value > 0 ? value : -value;
+  double powed = pow(abs, exponent);
   if (value < 0) {
     powed = powed * -1;
   }
@@ -65,7 +66,7 @@ void initReceiver(void) {
 
 void readReceiver(int *throttle, int *aileron, int *elevator, int *rudder) {
   *throttle = value[INDEX_THROTTLE];
-  *aileron = expo(NEUTRALIZE(value[INDEX_AILERON]), 2) / 420;
-  *elevator = expo(NEUTRALIZE(value[INDEX_ELEVATOR]), 2) / 420;
+  *aileron = (int)(expo(NEUTRALIZE(value[INDEX_AILERON]), 1.6) / 37.4);
+  *elevator = (int)(expo(NEUTRALIZE(value[INDEX_ELEVATOR]), 1.6) / 37.4);
   *rudder = cut(NEUTRALIZE(value[INDEX_RUDDER]), -20, 20);
 }

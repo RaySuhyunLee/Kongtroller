@@ -48,8 +48,8 @@ void setup() {
   initIMU();
   initReceiver();
 
-  rollLevelCtrl.setIMax(LEVEL_I_MAX);
-  pitchLevelCtrl.setIMax(LEVEL_I_MAX);
+  //rollLevelCtrl.setIMax(LEVEL_I_MAX);
+  //pitchLevelCtrl.setIMax(LEVEL_I_MAX);
 }
 
 unsigned long prev_time=0;
@@ -122,11 +122,11 @@ void loop() {
       int fl, fr, bl, br;
       /* Level Control Logic */
 #ifdef LEVEL_CONTROL
-      out_level_roll = rollLevelCtrl.pid(roll_current - aileron * LEVEL_AILERON_GAIN, elapsed_time);
-      out_level_pitch = pitchLevelCtrl.pid(pitch_current - elevator * LEVEL_ELEVATOR_GAIN, elapsed_time);
+      out_level_roll = rollLevelCtrl.pid(aileron * LEVEL_AILERON_GAIN - roll_current, elapsed_time);
+      out_level_pitch = pitchLevelCtrl.pid(elevator * LEVEL_ELEVATOR_GAIN - pitch_current, elapsed_time);
 #else
-      out_level_roll = 0;
-      out_level_pitch = 0;
+      out_level_roll = aileron * RATE_AILERON_GAIN;
+      out_level_pitch = elevator * RATE_ELEVATOR_GAIN;
 #endif
 
       /* Rate Control Logic */
@@ -136,8 +136,8 @@ void loop() {
       pitch_omega = getRate(pitch_current-pitch_prev, elapsed_time);
       roll_omega = getRate(roll_current-roll_prev, elapsed_time);
 
-      out_rate_roll = rollRateCtrl.pid(roll_omega, elapsed_time, &roll_p, &roll_i, &roll_d) - aileron * RATE_AILERON_GAIN;
-      out_rate_pitch = pitchRateCtrl.pid(pitch_omega, elapsed_time, &pitch_p, &pitch_i, &pitch_d) - elevator * RATE_ELEVATOR_GAIN;
+      out_rate_roll = rollRateCtrl.pid(roll_omega - out_level_roll, elapsed_time, &roll_p, &roll_i, &roll_d);
+      out_rate_pitch = pitchRateCtrl.pid(pitch_omega - out_level_pitch, elapsed_time, &pitch_p, &pitch_i, &pitch_d);
 #else
       out_rate_roll = 0;
       out_rate_pitch = 0;
@@ -169,10 +169,10 @@ void loop() {
       bl = throttle - out_altitude;
       br = throttle - out_altitude;
 
-      fl += - out_level_roll * 0.75 - out_level_pitch - out_rate_roll * 0.75 - out_rate_pitch + out_rate_yaw * 0.75;
-      fr += out_level_roll * 0.75 - out_level_pitch + out_rate_roll * 0.75 - out_rate_pitch - out_rate_yaw * 0.75;
-      bl += - out_level_roll + out_level_pitch - out_rate_roll + out_rate_pitch - out_rate_yaw;
-      br += out_level_roll + out_level_pitch + out_rate_roll + out_rate_pitch + out_rate_yaw;
+      fl += -out_rate_roll * 0.7 - out_rate_pitch + out_rate_yaw * 0.7;
+      fr += out_rate_roll * 0.7 - out_rate_pitch - out_rate_yaw * 0.7;
+      bl += -out_rate_roll + out_rate_pitch - out_rate_yaw;
+      br += out_rate_roll + out_rate_pitch + out_rate_yaw;
       set_motors(fl, fr, bl, br);
 #ifdef DEBUG_MOTORS
       Serial.print("motors: [");

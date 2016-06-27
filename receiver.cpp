@@ -66,7 +66,7 @@ void initReceiver(void) {
 
 void readReceiver(int *throttle, int *aileron, int *elevator, int *rudder) {
   *throttle = value[INDEX_THROTTLE];
-  *aileron = (int)(expo(NEUTRALIZE(value[INDEX_AILERON]), 1.6) / 37.4);
-  *elevator = (int)(expo(NEUTRALIZE(value[INDEX_ELEVATOR]), 1.6) / 37.4);
+  *aileron = cut(expo(NEUTRALIZE(value[INDEX_AILERON]), 1.6) / 37.4, -10, 10);
+  *elevator = cut(expo(NEUTRALIZE(value[INDEX_ELEVATOR]), 1.6) / 37.4, -10, 10);
   *rudder = cut(NEUTRALIZE(value[INDEX_RUDDER]), -20, 20);
 }
